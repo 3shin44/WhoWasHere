@@ -56,19 +56,3 @@ def get_datetime_string(format="%Y%m%d_%H%M%S_%f"):
     return datetime.datetime.now().strftime(format)
 
 
-# redis 寫入
-def redis_writer():
-    """
-    Get the current get_datetime_string in a human-readable format.
-
-    :return: Current datetime as a string.
-    """
-
-
-# 產生 redis資料格式
-def reids_data_formatter():
-    """
-    Get the current get_datetime_string in a human-readable format.
-
-    :return: Current datetime as a string.
-    """
