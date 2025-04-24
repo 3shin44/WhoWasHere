@@ -1,0 +1,56 @@
+*.iml
+.gradle
+/local.properties
+.idea
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Python 虛擬環境
+venv/
+*.venv/
+
+# Python 編譯文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 日誌文件
+*.log
+logs/
+
+# 打包生成的目錄
+dist/
+build/
+*.egg-info/
+
+# 依賴安裝相關
+wheels/
+*.whl
+
+# IDE 配置文件
+.idea/           # PyCharm
+.vscode/         # Visual Studio Code
+*.sublime-*
+
+# 系統生成的文件
+.DS_Store        # macOS
+Thumbs.db        # Windows
+
+# 其他臨時文件
+*.swp
+*.bak
+*.tmp
+
+# 環境變數
+.env
+test

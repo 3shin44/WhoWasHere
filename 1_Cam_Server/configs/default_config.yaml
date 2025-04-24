@@ -1,0 +1,6 @@
+app:
+  name: "WhoWasHere_CamServer" # 專案名稱
+  version: "1.0.0" # 版本號
+  log_level: "info" # 日誌等級: 可選值為 "debug", "info", "warning", "error", "critical"
+paths:
+  log_dir: "./logs" # 日誌目錄
