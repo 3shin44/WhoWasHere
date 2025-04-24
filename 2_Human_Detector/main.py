@@ -1,27 +1,27 @@
-import hashlib
+import json
 import os
-import random
-import time
+from datetime import datetime
+from functools import partial
 
 from config_loader import (
     load_config,
 )
+from dotenv import load_dotenv
 from logger import setup_logger
 from person_detector import PersonDetector, PersonDetectorYOLO8
-from util import frame_to_base64, frame_to_jpg, get_datetime_string
+from redis_client import RedisClient
+from util import frame_to_base64
 
 
-def detection_callback(label, confidence, frame, folder_path="./test/v8"):
-    print(f"Detected {label} with confidence {confidence:.2f} at {frame}")
-    # 生成雜湊值
-    unique_string = f"{get_datetime_string()}_{label}_{random.random()}"
-    hash_object = hashlib.md5(unique_string.encode())
-    hash_postfix = hash_object.hexdigest()[:5]  # 取前5碼
-
-    # 儲存檔案
-    frame_to_jpg(
-        frame, folder_path, f"{get_datetime_string()}_{label}_{hash_postfix}.jpg"
-    )
+def detection_callback(label, confidence, frame, redis_client, list_name, ttl=60):
+    # Callback 收到判斷後往REDIS丟 整理檔案由後續服務來寫 避免此處同時處理檔案
+    json_value = {
+        "capture_datetime": datetime.now().isoformat(),  # ISO 8601 format
+        "img_base64": frame_to_base64(frame),
+        "predict_probability": f"{confidence:.2f}",
+        "class_label": label,
+    }
+    redis_client.write_to_list(list_name, json.dumps(json_value), ttl)
 
 
 def main():
@@ -29,16 +29,33 @@ def main():
     logger = setup_logger()
     logger.info(f"Starting {config['app']['name']} v{config['app']['version']}")
 
-    video_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "./test/sample/japan_sample2.mp4"
+    # 讀取本地設定檔
+    load_dotenv()
+    list_name = os.getenv("HD_REDIS_QUEUE")
+    ttl = int(os.getenv("HD_REDIS_QUEUE_TTL"))
+    frame_interval = int(os.getenv("HD_FRAME_INTERVAL"))
+    threshold = float(os.getenv("HD_THRESHOLD"))
+    print(f"frame_interval: {frame_interval}, threshold: {threshold}")
+    # 實體化REDIS
+    redis_client = RedisClient()
+
+    # 綁定CALLBACK參數
+    callback_with_instance = partial(
+        detection_callback, redis_client=redis_client, list_name=list_name, ttl=ttl
     )
-    frame_interval = 30
-
-    # detector = PersonDetector(video_source=video_path, threshold=0.5, callback=detection_callback)
-    # detector.process_video(frame_interval)
-
-    # detector_v8 = PersonDetectorYOLO8(video_source=video_path, threshold=0.5, callback=detection_callback)
-    # detector_v8.process_video(frame_interval)
+    
+    # 設定影片來源
+    # video_path = os.path.join(
+    #     os.path.dirname(os.path.abspath(__file__)), "./test/sample/japan_sample2.mp4"
+    # )
+    video_path = "http://127.0.0.1:8080/video"
+    
+    
+    # 實體化模型, 啟動辨識
+    detector_v8 = PersonDetectorYOLO8(
+        video_source=video_path, threshold=threshold, callback=callback_with_instance
+    )
+    detector_v8.process_video(frame_interval)
 
 
 if __name__ == "__main__":

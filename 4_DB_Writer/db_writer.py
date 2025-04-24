@@ -1,17 +1,19 @@
+import os
 import sqlite3
 import time
-from dotenv import load_dotenv
-import os
 
 from config_loader import (
     load_config,
 )
+from dotenv import load_dotenv
 from logger import setup_logger
+
 config = load_config()
 logger = setup_logger()
 
 # 載入 .env 檔案
 load_dotenv()
+
 
 class SQLiteHandler:
     def __init__(self, db_path=None):
@@ -19,9 +21,11 @@ class SQLiteHandler:
         初始化 SQLiteHandler 物件
         :param db_path: 資料庫檔案的路徑
         """
-        self.db_path = db_path or os.getenv('DBW_SQLITE_PATH')
+        self.db_path = db_path or os.getenv("DBW_SQLITE_PATH")
         if not self.db_path:
-            raise ValueError("Database path is not specified in .env or as a parameter.")
+            raise ValueError(
+                "Database path is not specified in .env or as a parameter."
+            )
         self.conn = self.connect()
         self.enable_wal_mode()
 
@@ -69,7 +73,9 @@ class SQLiteHandler:
                 return cursor.fetchall()
             except sqlite3.OperationalError as e:
                 if "database is locked" in str(e) and attempt < retries - 1:
-                    logger.info(f"Database is locked. Retrying {attempt + 1}/{retries}...")
+                    logger.info(
+                        f"Database is locked. Retrying {attempt + 1}/{retries}..."
+                    )
                     time.sleep(1)  # 等待 1 秒後重試
                 else:
                     raise RuntimeError(f"Error executing query: {e}")
@@ -82,10 +88,10 @@ class SQLiteHandler:
             self.conn.close()
             logger.info("SQLite connection closed.")
 
+
 # 使用範例
 if __name__ == "__main__":
     db_handler = SQLiteHandler()
-
 
     # 插入資料 (範例)
     insert_query = """

@@ -158,7 +158,7 @@ class PersonDetectorYOLO8:
         # Load YOLOv8 model
         self.model = YOLO(model_path)
 
-    def process_video(self, frame_interval=30):
+    def process_video(self, frame_interval=30, debug_mode=False):
         """
         Process the video and detect persons in real-time based on frame interval.
 
@@ -216,12 +216,16 @@ class PersonDetectorYOLO8:
                         if self.callback:
                             self.callback(label, confidence, frame)
 
-            # Display the frame with annotations
-            cv2.imshow("Video", frame)
+            # DEV MODE
+            if(debug_mode):
+                # Display the frame with annotations
+                cv2.imshow("Video", frame)
 
-            # Break the loop if 'q' is pressed
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
+                # Break the loop if 'q' is pressed
+                if cv2.waitKey(1) & 0xFF == ord("q"):
+                    break
+            
+
 
         # Release resources
         cap.release()

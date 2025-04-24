@@ -48,7 +48,7 @@ class VideoServer:
             if not ret or frame is None:
                 logger.warning("Failed to read frame, sending black frame")
                 frame = np.zeros((480, 640, 3), dtype=np.uint8)  # 假畫面
-                time.sleep(1)
+                time.sleep(60)
             yield frame
 
     def generate_frames(self):
