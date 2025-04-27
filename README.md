@@ -2,7 +2,7 @@
 
 ## 說明
 
-一個智慧型居家安全系統，協助用戶查詢曾來訪住家的訪客。  
+提供用戶查詢曾來訪住家的訪客。  
 透過影像監控與人形偵測，產生截圖並記錄時間，使用者可於 Android 裝置中快速查詢，不需要一格格翻閱監控錄影。
 
 ## 功能特色
@@ -10,8 +10,7 @@
 - 自動分析監控影像，偵測「人形物體」
 - 擷取訪客出現時的畫面截圖與時間
 - 使用 Redis 緩衝處理，降低系統負載
-- 提供 Web API 查詢介面
-- Android APP 查詢 UI，使用時間條件過濾
+- 提供 Android APP 查詢，使用時間條件過濾
 
 ## 系統架構
 
@@ -24,7 +23,7 @@
    使用影像辨識技術（YOLO）偵測畫面中是否有人形出現，若有，擷取截圖並記錄時間。
 
 3. **Redis 暫存區**  
-   所有偵測出的紀錄會暫時寫入 Redis（包含圖檔位置、時間等資訊），避免主程式阻塞。
+   所有偵測到的紀錄會暫時寫入 Redis（包含圖檔位置、時間等資訊），避免主程式阻塞。
 
 4. **資料入庫監聽器**  
    背景服務持續監聽 Redis，當有新資料時，將其批次寫入 SQLite 資料庫，永久儲存。
@@ -34,6 +33,9 @@
 
 6. **Web API 服務**  
    提供 HTTP 查詢介面，支援條件查詢（如日期、時間區間），回傳結果。
+   
+7. **Web 靜態資源**  
+  提供HTTP存取圖片資源，使用Ngnix提供服務。
 
 ---
 
@@ -43,7 +45,7 @@
    使用者可於 APP 中輸入查詢條件（日期、時間等），按下查詢後呼叫後端 API。
 
 2. **資料呈現**  
-   APP 解析回傳 JSON 結果，並以圖文形式呈現當時的訪客截圖與時間。
+   APP 解析回傳 JSON 結果，並以圖文列表呈現當時的訪客截圖與時間。
 
 ---
 
@@ -54,8 +56,8 @@
 | 人形偵測     | YOLO                     |
 | 資料傳遞緩衝 | Redis                    |
 | 資料庫       | SQLite                   |
-| Web API      | Flask/sqlalchemy         |
-| Client APP   | Android Studio (Jetpack Compose + Kotlin) |
+| Web API      | Flask/SQLAlchemy         |
+| Client APP   | Android Studio (React Native) |
 | 主機         | Raspberry Pi 5 (Rpi OS)  |
 | 容器化       | Docker                   |
 
@@ -66,21 +68,44 @@
 ### SERVER 端
 
 
-### Android Client (APP)
-
-下載APK檔案安裝
-
 ---
 
 ## 專案結構
 
+```aiignore
+├─0_Rpi_Script              # 樹梅派快捷指令
+│
+├─1_Cam_Server              # 影像處理接口
+│  └─configs                  # 微服務設定檔
+│
+├─2_Human_Detector          # 人形物體監測
+│  ├─configs                  # 微服務設定檔
+│  └─yolo                     # YOLO 模型, 參數, 類別清單...
+│
+├─3_Redis                   # Redis 暫存區
+│
+├─4_DB_Writer               # 資料入庫監聽器
+│  └─configs                  # 微服務設定檔
+│
+├─5_SQLite                  # SQLite 資料庫
+│  
+├─6_Web_Server              # Web API 服務
+│  └─configs                  # 微服務設定檔
+│
+└─7_Img_Server              # Web 靜態資源
+   └─nginx                    # nginx設定檔
 
+```
 
 ## 討論
 
 - 遠端存取
 
 可能方案: 申請DOMAIN & 套用Cloudflare Tunnel服務 (網路安全性)
+
+- 共用函式庫
+
+應建立本地/私有函式庫，避免同樣功能重工，例如：封裝後的logger工具
 
 ## ChatGPT估算工時 (2025.04.22)
 
