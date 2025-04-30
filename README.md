@@ -49,6 +49,10 @@
 
 ---
 
+### 示意圖
+
+![image](./imgFolder/sd-diagram.jpg)
+
 ## 使用技術
 
 | 類別         | 技術/工具                |
