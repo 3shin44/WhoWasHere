@@ -1,7 +1,9 @@
 import os
+
 import cv2
 import numpy as np
 from ultralytics import YOLO
+
 
 class PersonDetectorYOLO8:
     def __init__(
@@ -81,15 +83,13 @@ class PersonDetectorYOLO8:
                             self.callback(label, confidence, frame)
 
             # DEV MODE
-            if(debug_mode):
+            if debug_mode:
                 # Display the frame with annotations
                 cv2.imshow("Video", frame)
 
                 # Break the loop if 'q' is pressed
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
-            
-
 
         # Release resources
         cap.release()

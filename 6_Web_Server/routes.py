@@ -1,21 +1,23 @@
-from flask import Blueprint, request
-from service import service_query_capture_log
 from config_loader import load_config
+from flask import Blueprint, request
 from logger import setup_logger
+from service import service_query_capture_log
 
-bp = Blueprint('api', __name__)
+bp = Blueprint("api", __name__)
 
 logger = setup_logger()
 
+
 # 查詢版本號
-@bp.route('/api/version', methods=['GET'])
+@bp.route("/api/version", methods=["GET"])
 def get_version():
     config = load_config()
     logger.info(f"/api/version: {request}")
-    return (f"{config['app']['name']} v{config['app']['version']}")
+    return f"{config['app']['name']} v{config['app']['version']}"
+
 
 # 查詢時間範圍內訪客
-@bp.route('/api/queryVisitor', methods=['POST'])
+@bp.route("/api/queryVisitor", methods=["POST"])
 def query_capture_log():
     try:
         req_json = request.get_json(silent=True) or {}

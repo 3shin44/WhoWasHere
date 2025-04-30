@@ -1,10 +1,11 @@
+import base64
 import json
 import os
-import base64
-from datetime import datetime
 import uuid
+from datetime import datetime
 
 from dotenv import load_dotenv
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -12,8 +13,10 @@ from config_loader import (
     load_config,
 )
 from logger import setup_logger
+
 config = load_config()
 logger = setup_logger()
+
 
 def convert_json(item):
     """
@@ -26,6 +29,7 @@ def convert_json(item):
     except (ValueError, KeyError, json.JSONDecodeError) as e:
         logger.error(f"Error converting item: {e}")
         raise RuntimeError(f"Error converting item: {e}")
+
 
 def convert_db_item(item, filename):
     """
@@ -43,9 +47,10 @@ def convert_db_item(item, filename):
         data.get("img_base64"),
         filename,
         data.get("predict_probability"),
-        data.get("class_label")  # 預設為 None，如果沒有提供 note
+        data.get("class_label"),  # 預設為 None，如果沒有提供 note
     )
     return insert_query, params
+
 
 def save_to_file(item):
     """
@@ -68,11 +73,15 @@ def save_to_file(item):
         raise ValueError("Invalid capture_datetime format. Expected ISO 8601 format.")
 
     # Generate timestamp and UUID
-    timestamp = capture_time.strftime("%Y%m%d_%H%M%S_%f")[:-3]  # Format: YYYYMMDD_HHMMSS_sss
+    timestamp = capture_time.strftime("%Y%m%d_%H%M%S_%f")[
+        :-3
+    ]  # Format: YYYYMMDD_HHMMSS_sss
     short_uuid = str(uuid.uuid4())[:5]  # Generate a 5-character UUID
 
     # Get the label from the input data
-    class_label = data.get("class_label", "unknown")  # Default to "unknown" if label is not provided
+    class_label = data.get(
+        "class_label", "unknown"
+    )  # Default to "unknown" if label is not provided
 
     # Construct the filename
     filename = f"{timestamp}_{class_label}_{short_uuid}.jpg"

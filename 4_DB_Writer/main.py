@@ -20,7 +20,7 @@ def main():
             file_name = save_to_file(item)  # 儲存圖片並取得檔名
             insert_query, params = convert_db_item(item, file_name)
             db_handler.execute_query(insert_query, params)
-            
+
         consumer.listen(callback=consumer_callback)
     except Exception as e:
         logger.error(f"Main process error: {e}")

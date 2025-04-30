@@ -43,17 +43,16 @@ def main():
     callback_with_instance = partial(
         detection_callback, redis_client=redis_client, list_name=list_name, ttl=ttl
     )
-    
+
     # 設定影片來源
     video_path = os.getenv("HD_VIDEO_SOURCE")
-    
+
     # 實體化模型, 啟動辨識 (tiny)
     detector_tiny = PersonDetector(
         video_source=video_path, threshold=threshold, callback=callback_with_instance
     )
     detector_tiny.process_video(frame_interval)
-    
-    
+
     # 實體化模型, 啟動辨識 (v8 硬體需求較高)
     # detector_v8 = PersonDetectorYOLO8(
     #     video_source=video_path, threshold=threshold, callback=callback_with_instance

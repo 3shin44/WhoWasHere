@@ -6,8 +6,10 @@ from config_loader import (
 from dotenv import load_dotenv
 from logger import setup_logger
 from video_server import VideoServer
+
 # 載入 .env 檔案
 load_dotenv()
+
 
 def main():
     config = load_config()

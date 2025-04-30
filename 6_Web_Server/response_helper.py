@@ -1,9 +1,12 @@
 from enum import Enum
-from flask import  Flask, jsonify
+
+from flask import Flask, jsonify
 from logger import setup_logger
+
 logger = setup_logger()
 
 app = Flask(__name__)
+
 
 class ReturnCode(Enum):
     SUCCESS = ("0000", "Success")
@@ -16,14 +19,13 @@ class ReturnCode(Enum):
     def msg(self):
         return self.value[1]
 
+
 def make_response(code_enum: ReturnCode, **kwargs):
     # **kwargs 代表「**keyword arguments（關鍵字參數）」的縮寫
-    response = {
-        "returnCode": code_enum.code(),
-        "returnMsg": code_enum.msg()
-    }
+    response = {"returnCode": code_enum.code(), "returnMsg": code_enum.msg()}
     response.update(kwargs)
     return jsonify(response)
+
 
 # 全局異常處理
 @app.errorhandler(Exception)

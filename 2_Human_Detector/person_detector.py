@@ -1,6 +1,8 @@
 import os
+
 import cv2
 import numpy as np
+
 
 class PersonDetector:
     def __init__(self, video_source, threshold=0.5, callback=None):
@@ -133,6 +135,7 @@ class PersonDetector:
         cap.release()
         cv2.destroyAllWindows()
 
+
 # Test mode
 if __name__ == "__main__":
 
@@ -143,5 +146,7 @@ if __name__ == "__main__":
         os.path.dirname(os.path.abspath(__file__)), "./test/sample/sample1.mp4"
     )
 
-    detector_v4 = PersonDetector(video_source=video_path, threshold=0.5, callback=detection_callback)
+    detector_v4 = PersonDetector(
+        video_source=video_path, threshold=0.5, callback=detection_callback
+    )
     detector_v4.process_video()
