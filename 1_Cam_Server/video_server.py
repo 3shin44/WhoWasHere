@@ -39,33 +39,40 @@ class VideoServer:
     def video_stream_generator(self):
         """生成視訊流"""
         cap = None
+        retry_interval = 5  # 每 5 秒重新嘗試連線
+        last_attempt_time = 0
+
         while True:
             if cap is None or not cap.isOpened():
-                logger.info(f"Opening video source: {self.source_url}")
-                cap = cv2.VideoCapture(self.source_url)
+                now = time.time()
+                if now - last_attempt_time >= retry_interval:
+                    logger.warning(f"Attempting to open source: {self.source_url}")
+                    cap = cv2.VideoCapture(self.source_url)
+                    last_attempt_time = now
 
-            ret, frame = cap.read()
+            ret, frame = cap.read() if cap and cap.isOpened() else (False, None)
+
             if not ret or frame is None:
-                logger.warning("Failed to read frame, sending black frame")
-                frame = np.zeros((480, 640, 3), dtype=np.uint8)  # 假畫面
-                time.sleep(60)
+                logger.warning("Source unavailable, using fallback black frame")
+                frame = np.zeros((480, 640, 3), dtype=np.uint8)
+
             yield frame
+            time.sleep(0.05)  # 控制幀率（約 20 fps）
 
     def generate_frames(self):
-        """生成影像幀"""
+        """生成影像幀 (參數調整 openCV對應格式)"""
         for frame in self.video_stream_generator():
             try:
-                # 嘗試將影像編碼為 JPEG 格式
                 _, buffer = cv2.imencode(".jpg", frame)
-                logger.debug("Successfully encoded frame to JPEG")
                 yield (
                     b"--frame\r\n"
-                    b"Content-Type: image/jpeg\r\n\r\n" + buffer.tobytes() + b"\r\n"
+                    b"Content-Type: image/jpeg\r\n"
+                    + f"Content-Length: {len(buffer)}\r\n\r\n".encode()
+                    + buffer.tobytes()
+                    + b"\r\n"
                 )
             except Exception as e:
-                # 當發生異常時，記錄日誌並拋出異常
-                logger.error(f"Error generating frame: {e}")
-                raise RuntimeError(f"Error generating frame: {e}")
+                logger.error(f"Frame encoding error: {e}")
 
     def video_feed(self):
         """視訊流路由"""
@@ -77,7 +84,7 @@ class VideoServer:
     def run(self):
         """啟動 Flask 伺服器"""
         logger.info(f"Starting Flask server on {self.host}:{self.port}")
-        self.app.run(host=self.host, port=self.port)
+        self.app.run(host=self.host, port=self.port, threaded=True)
 
 
 # 主程式

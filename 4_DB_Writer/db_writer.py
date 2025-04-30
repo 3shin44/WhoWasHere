@@ -21,7 +21,14 @@ class SQLiteHandler:
         初始化 SQLiteHandler 物件
         :param db_path: 資料庫檔案的路徑
         """
-        self.db_path = db_path or os.getenv("DBW_SQLITE_PATH")
+        print("SQLiteHandler INIT")
+        # 取得檔名，必要時給預設
+        filename = os.getenv("DBW_SQLITE_FILENAME", "default.db")
+        # 固定路徑為容器內的掛載資料夾
+        mount_path = "/app/db"
+        # 合併完整路徑
+        self.db_path = db_path or os.path.join(mount_path, filename)
+        print(f"SQLiteHandler: ", self.db_path)
         if not self.db_path:
             raise ValueError(
                 "Database path is not specified in .env or as a parameter."

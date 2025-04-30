@@ -9,7 +9,7 @@ def main():
     logger = setup_logger()
     logger.info(f"Starting {config['app']['name']} v{config['app']['version']}")
     flask_app = create_app()
-    flask_app.run()
+    flask_app.run(host="0.0.0.0")
     
 if __name__ == "__main__":
     main()

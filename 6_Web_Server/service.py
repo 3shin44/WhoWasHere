@@ -56,4 +56,4 @@ def service_query_capture_log(resquest):
 
 def img_path_combiner(file_name):
     prefix_date = file_name.split('_')[0]  # 取出日期部分
-    return f"{Config.WS_IMG_FOLDER}/{prefix_date}/{file_name}"
+    return f"{Config.WS_NGINX_HOST}/{prefix_date}/{file_name}"

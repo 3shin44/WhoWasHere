@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: wwh-web-server
+    ports:
+      - "${WS_SERVER_PORT:-5000}:5000"
+    command: gunicorn -w 2 -b 0.0.0.0:${WS_SERVER_PORT:-5000} wsgi:flask_app
+    volumes:
+      - .:/app
+      - ${WS_DATABASE_FOLDER}:/app/db
+    working_dir: /app
+    restart: unless-stopped

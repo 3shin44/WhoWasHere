@@ -78,7 +78,9 @@ def save_to_file(item):
     filename = f"{timestamp}_{class_label}_{short_uuid}.jpg"
 
     # Get the base folder from the .env file
-    base_folder = os.getenv("DBW_IMG_FOLDER")
+    # 固定路徑為容器內的掛載資料夾
+    mount_path = "/app/img"
+    base_folder = os.path.join(mount_path)
     if not base_folder:
         logger.error("DBW_IMG_FOLDER is not set in the .env file.")
         raise ValueError("DBW_IMG_FOLDER is not set in the .env file.")

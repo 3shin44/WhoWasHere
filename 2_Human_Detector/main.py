@@ -8,7 +8,7 @@ from config_loader import (
 )
 from dotenv import load_dotenv
 from logger import setup_logger
-from person_detector import PersonDetector, PersonDetectorYOLO8
+from person_detector import PersonDetector
 from redis_client import RedisClient
 from util import frame_to_base64
 
@@ -35,7 +35,7 @@ def main():
     ttl = int(os.getenv("HD_REDIS_QUEUE_TTL"))
     frame_interval = int(os.getenv("HD_FRAME_INTERVAL"))
     threshold = float(os.getenv("HD_THRESHOLD"))
-    print(f"frame_interval: {frame_interval}, threshold: {threshold}")
+
     # 實體化REDIS
     redis_client = RedisClient()
 
@@ -45,17 +45,20 @@ def main():
     )
     
     # 設定影片來源
-    # video_path = os.path.join(
-    #     os.path.dirname(os.path.abspath(__file__)), "./test/sample/japan_sample2.mp4"
-    # )
-    video_path = "http://127.0.0.1:8080/video"
+    video_path = os.getenv("HD_VIDEO_SOURCE")
     
-    
-    # 實體化模型, 啟動辨識
-    detector_v8 = PersonDetectorYOLO8(
+    # 實體化模型, 啟動辨識 (tiny)
+    detector_tiny = PersonDetector(
         video_source=video_path, threshold=threshold, callback=callback_with_instance
     )
-    detector_v8.process_video(frame_interval)
+    detector_tiny.process_video(frame_interval)
+    
+    
+    # 實體化模型, 啟動辨識 (v8 硬體需求較高)
+    # detector_v8 = PersonDetectorYOLO8(
+    #     video_source=video_path, threshold=threshold, callback=callback_with_instance
+    # )
+    # detector_v8.process_video(frame_interval)
 
 
 if __name__ == "__main__":

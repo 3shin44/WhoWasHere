@@ -67,6 +67,91 @@
 
 ### SERVER 端
 
+1. **影像處理接口: Cam Server**  
+
+  - 切換至目錄下
+  - 修改 .env 參數, 影像來源與暴露PORT號
+  - 執行 `docker compose up`
+  - 服務位址`http://{server}:{port}/video`
+
+2. **人形物體監測: Human Dectecor**  
+   
+   - 切換至目錄下
+   - 建立虛擬環境 `python -m vevn vevn`
+   - 切換 `source venv/bin/activate`
+   - 安裝 `pip install -r requirements.txt`
+   - 註冊systemd
+```
+# 註冊系統服務
+sudo nano /etc/systemd/system/wwh-human-detector.service
+
+
+# 編輯內容
+[Unit]
+Description=WhoWasHere Human Detector
+After=network.target
+
+[Service]
+User={USERNAME}
+Group={USERGROUP}
+WorkingDirectory=/{PATH}/WhoWasHere/2_Human_Detector
+ExecStart=/{PATH}/WhoWasHere/2_Human_Detector/venv/bin/python main.py
+Restart=always
+RestartSec=5
+StandardOutput=append:/{PATH}/WhoWasHere/2_Human_Detector/logs/human-detector.log
+StandardError=append:/{PATH}/WhoWasHere/2_Human_Detector/logs/human-detector.err.log
+Environment="PYTHONUNBUFFERED=1"
+
+[Install]
+WantedBy=multi-user.target
+
+```
+   - 啟動/停止指令
+```
+# 初次設定載入
+sudo systemctl daemon-reexec
+
+# 重啟
+sudo systemctl daemon-reload
+
+# 啟動
+sudo systemctl enable wwh-human-detector
+
+# 停止
+sudo systemctl start wwh-human-detector
+```
+   - (備註)因Rpi5硬體性能，使用容器容易卡住，使用YOLO4-tiny
+
+
+1. **Redis 暫存區** 
+
+  - 切換至目錄下
+  - 修改 .env 參數，使用PORT號與密碼
+  - 執行 `docker compose up`
+
+4. **資料入庫監聽器**  
+
+  - (Optional) 本機允許 REDIS PORT (若有防火牆UFW，或其他方式需設定DOCKER NETWORK)
+  - 切換至目錄下
+  - 修改 .env 參數，使用PORT號與密碼
+  - 執行 `docker compose up`
+
+5. **SQLite 資料庫**  
+
+  - SQLite使用預設檔案或init.sql建立初始化資料庫
+  - 紀錄資料夾路徑與檔案名稱，供其他服務掛載
+
+6. **Web API 服務**  
+
+  - 切換至目錄下
+  - 修改 .env 參數，SQLITE資料夾路徑與DB檔案名稱、WEB API服務PORT號、Nginx HOST位址
+  - 執行 `docker compose up`
+   
+7. **Web 靜態資源**  
+
+  - 切換至目錄下
+  - 修改 .env 參數，以WEB方式提供圖片資源，設定服務PORT號與圖片資料夾路徑
+  - 執行 `docker compose up`
 
 ---
 

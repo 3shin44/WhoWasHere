@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: wwh-db-writer
+    command: python main.py
+    volumes:
+      - .:/app
+      - ${DBW_IMG_FOLDER}:/app/img
+      - ${DBW_SQLITE_PATH}:/app/db
+    working_dir: /app
+    restart: unless-stopped
