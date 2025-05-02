@@ -18,9 +18,9 @@ def service_query_capture_log(resquest):
     if not (query_date and start_time and end_time):
         return make_response(ReturnCode.PARAM_ERROR), 400
 
-    # 組合 datetime 字串格式
-    start_dt_str = f"{query_date} {start_time}"
-    end_dt_str = f"{query_date} {end_time}"
+    # 組合 datetime 字串格式 (配合CLIENT端UI)
+    start_dt_str = f"{query_date} {start_time}:00"
+    end_dt_str = f"{query_date} {end_time}:00"
 
     # 解析為 datetime 物件
     try:
