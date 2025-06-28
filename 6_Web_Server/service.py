@@ -18,27 +18,18 @@ def service_query_capture_log(resquest):
     if not (query_date and start_time and end_time):
         return make_response(ReturnCode.PARAM_ERROR), 400
 
-    # 組合 datetime 字串格式 (配合CLIENT端UI)
+    # 組合查詢時間字串
     start_dt_str = f"{query_date} {start_time}:00"
     end_dt_str = f"{query_date} {end_time}:00"
 
-    # 解析為 datetime 物件
+    # 嘗試轉換成 datetime 並轉為 ISO 格式 (符合 DB 格式)
     try:
-        start_dt = datetime.strptime(start_dt_str, "%Y-%m-%d %H:%M:%S")
-        end_dt = datetime.strptime(end_dt_str, "%Y-%m-%d %H:%M:%S")
-    except ValueError as e:
-        return (
-            make_response(
-                ReturnCode.PARAM_ERROR, errorMessage="Invalid date/time format."
-            ),
-            400,
-        )
+        start_dt_iso = datetime.strptime(start_dt_str, "%Y-%m-%d %H:%M:%S").replace(microsecond=0).isoformat()
+        end_dt_iso = datetime.strptime(end_dt_str, "%Y-%m-%d %H:%M:%S").replace(microsecond=0).isoformat()
+    except ValueError:
+        return make_response(ReturnCode.PARAM_ERROR, errorMessage="Invalid date/time format."), 400
 
-    # 補上微秒部分並轉換為 ISO 格式
-    start_dt_iso = start_dt.replace(microsecond=0).isoformat()
-    end_dt_iso = end_dt.replace(microsecond=0).isoformat()
-
-    # 使用 with_entities 來選擇需要的欄位
+    # 查詢符合時間區間的資料
     results = (
         CaptureLog.query.with_entities(
             CaptureLog.dbid,
@@ -55,19 +46,23 @@ def service_query_capture_log(resquest):
         .all()
     )
 
-    # 將查詢結果轉換為字典
-    result_list = [
-        {
+    # 組合回應結果，解析 capture_datetime 為標準格式
+    result_list = []
+    for r in results:
+        try:
+            dt_obj = datetime.fromisoformat(r.capture_datetime)
+            dt_formatted = dt_obj.strftime("%Y-%m-%d %H:%M:%S")
+        except Exception as e:
+            logger.warning(f"無法轉換時間格式：{r.capture_datetime} | 錯誤: {e}")
+            dt_formatted = r.capture_datetime  # 保留原字串
+
+        result_list.append({
             "dbid": r.dbid,
-            "capture_datetime": datetime.fromisoformat(r.capture_datetime).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
+            "capture_datetime": dt_formatted,
             "img_path": img_path_combiner(r.img_path),
             "predict_probability": r.predict_probability,
             "class_label": r.class_label,
-        }
-        for r in results
-    ]
+        })
 
     return make_response(ReturnCode.SUCCESS, resultList=result_list), 200
 

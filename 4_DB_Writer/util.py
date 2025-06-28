@@ -3,6 +3,8 @@ import json
 import os
 import uuid
 from datetime import datetime
+from PIL import Image
+import io
 
 from dotenv import load_dotenv
 
@@ -44,7 +46,7 @@ def convert_db_item(item, filename):
     """
     params = (
         data.get("capture_datetime"),
-        data.get("img_base64"),
+        "", # 暫不儲存 節省空間 data.get("img_base64")
         filename,
         data.get("predict_probability"),
         data.get("class_label"),  # 預設為 None，如果沒有提供 note
@@ -52,16 +54,34 @@ def convert_db_item(item, filename):
     return insert_query, params
 
 
-def save_to_file(item):
+def save_to_file(item, max_width=1024, max_height=1024):
     """
-    取出BASE64轉為JPG圖檔, 儲存至指定路徑
+    取出 BASE64 轉為 JPG 圖檔，若尺寸過大會自動縮小，然後儲存至指定路徑。
     """
     data = convert_json(item)  # 將 JSON 字串轉換為字典
 
-    # Decode the BASE64 string
-    img_data = base64.b64decode(data.get("img_base64"))
+    # Step 1: 解碼 base64 並轉為 PIL 圖片
+    img_base64 = data.get("img_base64")
+    if not img_base64:
+        raise ValueError("img_base64 is missing")
 
-    # Parse the external timestamp
+    try:
+        img_data = base64.b64decode(img_base64)
+        image = Image.open(io.BytesIO(img_data))
+
+        # 自動調整圖片尺寸（維持比例）
+        if image.width > max_width or image.height > max_height:
+            image.thumbnail((max_width, max_height), Image.Resampling.LANCZOS)
+
+        # 轉回 bytes 格式以便寫入檔案
+        img_bytes_io = io.BytesIO()
+        image.save(img_bytes_io, format="JPEG")
+        img_data = img_bytes_io.getvalue()
+    except Exception as e:
+        logger.error(f"Failed to decode or resize image: {e}")
+        raise ValueError(f"Invalid image data or base64 input: {e}")
+
+    # Step 2: 解析時間戳
     capture_datetime = data.get("capture_datetime")
     if not capture_datetime:
         logger.error("capture_datetime is missing in the input data.")
@@ -72,37 +92,20 @@ def save_to_file(item):
         logger.error("Invalid capture_datetime format. Expected ISO 8601 format.")
         raise ValueError("Invalid capture_datetime format. Expected ISO 8601 format.")
 
-    # Generate timestamp and UUID
-    timestamp = capture_time.strftime("%Y%m%d_%H%M%S_%f")[
-        :-3
-    ]  # Format: YYYYMMDD_HHMMSS_sss
-    short_uuid = str(uuid.uuid4())[:5]  # Generate a 5-character UUID
-
-    # Get the label from the input data
-    class_label = data.get(
-        "class_label", "unknown"
-    )  # Default to "unknown" if label is not provided
-
-    # Construct the filename
+    # Step 3: 檔案命名與儲存路徑
+    timestamp = capture_time.strftime("%Y%m%d_%H%M%S_%f")[:-3]
+    short_uuid = str(uuid.uuid4())[:5]
+    class_label = data.get("class_label", "unknown")
     filename = f"{timestamp}_{class_label}_{short_uuid}.jpg"
 
-    # Get the base folder from the .env file
-    # 固定路徑為容器內的掛載資料夾
-    mount_path = "/app/img"
-    base_folder = os.path.join(mount_path)
-    if not base_folder:
-        logger.error("DBW_IMG_FOLDER is not set in the .env file.")
-        raise ValueError("DBW_IMG_FOLDER is not set in the .env file.")
-
-    # Create the subfolder for the current date
+    base_folder = "/app/img"
     date_folder = capture_time.strftime("%Y%m%d")
     save_path = os.path.join(base_folder, date_folder)
-    os.makedirs(save_path, exist_ok=True)  # Ensure the folder exists
+    os.makedirs(save_path, exist_ok=True)
 
-    # Full file path
     file_path = os.path.join(save_path, filename)
 
-    # Write the image data to the file
+    # Step 4: 儲存圖片
     with open(file_path, "wb") as img_file:
         img_file.write(img_data)
 

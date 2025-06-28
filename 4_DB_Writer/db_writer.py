@@ -34,7 +34,7 @@ class SQLiteHandler:
                 "Database path is not specified in .env or as a parameter."
             )
         self.conn = self.connect()
-        self.enable_wal_mode()
+        # self.enable_wal_mode()
 
     def connect(self):
         """
@@ -80,11 +80,12 @@ class SQLiteHandler:
                 return cursor.fetchall()
             except sqlite3.OperationalError as e:
                 if "database is locked" in str(e) and attempt < retries - 1:
-                    logger.info(
+                    logger.error(
                         f"Database is locked. Retrying {attempt + 1}/{retries}..."
                     )
                     time.sleep(1)  # 等待 1 秒後重試
                 else:
+                    logger.error(f"Error executing query: {e}")
                     raise RuntimeError(f"Error executing query: {e}")
 
     def close(self):

@@ -14,13 +14,18 @@ from util import frame_to_base64
 
 
 def detection_callback(label, confidence, frame, redis_client, list_name, ttl=60):
+    logger = setup_logger()
+    print(f"Detected {label} with confidence {confidence:.2f}")
+    logger.info(f"Detected {label} with confidence {confidence:.2f}")
     # Callback 收到判斷後往REDIS丟 整理檔案由後續服務來寫 避免此處同時處理檔案
+    
     json_value = {
         "capture_datetime": datetime.now().isoformat(),  # ISO 8601 format
         "img_base64": frame_to_base64(frame),
         "predict_probability": f"{confidence:.2f}",
         "class_label": label,
     }
+    
     redis_client.write_to_list(list_name, json.dumps(json_value), ttl)
 
 
@@ -45,13 +50,15 @@ def main():
     )
 
     # 設定影片來源
-    video_path = os.getenv("HD_VIDEO_SOURCE")
+    video_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "./test/sample.mp4"
+    )
 
     # 實體化模型, 啟動辨識 (tiny)
     detector_tiny = PersonDetector(
         video_source=video_path, threshold=threshold, callback=callback_with_instance
     )
-    detector_tiny.process_video(frame_interval)
+    detector_tiny.process_video(frame_interval, debug_mode=True)
 
     # 實體化模型, 啟動辨識 (v8 硬體需求較高)
     # detector_v8 = PersonDetectorYOLO8(
