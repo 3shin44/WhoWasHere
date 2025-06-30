@@ -6,15 +6,18 @@ import numpy as np
 import websocket
 import ssl
 import av
-
+import os
 from flask import Flask, Response
 from config_loader import load_config
 from logger import setup_logger
+from dotenv import load_dotenv
 
 # 初始化設定與日誌
 config = load_config()
 logger = setup_logger()
 
+# 載入 .env 檔案
+load_dotenv()
 
 class VideoServer:
     def __init__(self, ws_url, host="0.0.0.0", port=8080):
@@ -49,7 +52,9 @@ class VideoServer:
 
         def on_open(ws):
             logger.info("[WebSocket Opened] Sending init commands")
-            ws.send("Basic YWRtaW46YTExMTExMQ==")
+            initMessage = os.getenv("CS_WS_INIT_MESSAGE")
+            # DEV: "Basic YWRtaW46YTExMTExMQ=="
+            ws.send(initMessage)
             ws.send("vobits=20,pbits=20,aobits=0,hq=1")
 
         def on_error(ws, error):
@@ -61,10 +66,11 @@ class VideoServer:
         logger.info(f"[WebSocket Connecting] to {self.ws_url}")
         while True:
             try:
+                headerOrigin = os.getenv("CS_WS_ORIGIN")
                 ws = websocket.WebSocketApp(
                     self.ws_url,
                     header=[
-                        "Origin: https://192.168.1.161",
+                        f"Origin: {headerOrigin}",
                         "User-Agent: PythonClient/1.0",
                     ],
                     on_open=on_open,

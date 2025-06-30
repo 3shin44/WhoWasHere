@@ -57,6 +57,9 @@ class PersonDetector:
 
         while cap.isOpened():
             ret, frame = cap.read()
+            if not ret or frame is None or frame.shape[0] == 0 or frame.shape[1] == 0:
+                print("[警告] 無效的 frame 被略過")
+                continue
             if not ret:
                 break
 
